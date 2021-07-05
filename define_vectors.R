@@ -1,0 +1,22 @@
+define_vectors<-function(X,y,race_ind){
+  M=dim(X)[2]
+  N=dim(X)[1]
+  race=X[,race_ind]
+  v1=numeric(M)
+  v2=numeric(M)
+  S1=0
+  S2=0
+  for(i in 1:N){
+    if(race[i]==1&y[i]==0){
+      v1=v1+X[i,]
+      S1=S1+1
+    }
+    if(race[i]==2&y[i]==0){
+      v2=v2+X[i,]
+      S2=S2+1
+    }
+  }
+v1=v1/S1
+v2=v2/S2
+return(list(t(as.matrix(v1)),t(as.matrix(v2))))
+}
