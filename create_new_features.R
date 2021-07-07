@@ -4,19 +4,15 @@ library(tidyverse)
 
 add_features <- function(df){
   df %>% 
-    #-- Convert ordered factors to integers (ignore right censoring)
-    mutate(across(starts_with("Arrests_"), ~as.integer(.x) - 1, .names="num_{.col}") )%>% 
-    mutate(across(starts_with("Convictions_"), ~as.integer(.x) - 1,.names="num_{.col}")) %>% 
-    mutate(yrs18 = as.integer(Age_at_Release)*5 -3 ) %>%  # yrs over 18 (approx)  
+    mutate(across(where(is.logical), as.integer)) %>%         
+    # convert ordered into integer (0 start)
+    mutate(across(where(is.ordered), ~as.integer(.x)-1L)) %>% 
     #-- Calculate Total Arrests
-    rowwise() %>% 
-    mutate(Total_Arrests = sum(c_across(starts_with("num_Arrests_")))) %>% 
+    rowwise() %>% # start rowwise
+    mutate(Total_Arrests = sum(c_across(starts_with("Arrests_")))) %>% 
     #-- Calculate Total Convictions
-    mutate(Total_Convictions = sum(c_across(starts_with("num_Convictions_")))) %>% 
-    #-- Standardize by Age
-    ungroup() %>% 
-    mutate(Arrests_Age = Total_Arrests / as.integer(Age_at_Release),
-           Convictions_Age = Total_Convictions / as.integer(Age_at_Release))
+    mutate(Total_Convictions = sum(c_across(starts_with("Convictions_")))) %>% 
+    ungroup() 
 }
 
 
