@@ -304,3 +304,40 @@ print(test_table)
 write.csv(train_table,paste0("train_table",cutoff,".csv"),row.names=F)
 write.csv(test_table,paste0("test_table",cutoff,".csv"),row.names=F)
 }
+
+
+# create fpr/fnr curve plot
+
+model_glm_basic=glm(Y1~Gender+Race+gang+Age_at_Release+
+                      Prison_Years+Total_Arrests+Total_Convictions+Education_Level+
+                      Dependents,data=dtrain)
+
+
+
+ptrain=predict(model_glm_basic,dtrain)
+ptest=predict(model_glm_basic,dtest)
+
+ptrain[ptrain<0]=0
+ptest[ptest<0]=0
+
+library(ROCit)
+measure1 <- measureit(score = ptest[dtest$Race==1], class = dtest$Y1[dtest$Race==1],
+                     measure = c("FNR", "FPR"))
+measure2 <- measureit(score = ptest[dtest$Race==2], class = dtest$Y1[dtest$Race==2],
+                      measure = c("FNR", "FPR"))
+
+measure1=data.frame(Cutoff=measure1$Cutoff,FPR=measure1$FPR,FNR=measure1$FNR)
+measure1$race="Black"
+measure2=data.frame(Cutoff=measure2$Cutoff,FPR=measure2$FPR,FNR=measure2$FNR)
+measure2$race="white"
+
+measure=rbind(measure1,measure2)
+measure=measure %>% tidyr::pivot_longer(cols = c("FPR", "FNR")) 
+names(measure)[4]="rate"
+names(measure)[3]="metric"
+p=measure %>%
+  ggplot()+geom_line(aes(x=Cutoff,y=rate,group=interaction(race,metric),color=race,linetype=metric))+
+  theme_bw()+
+  xlab("decision cutoff")+ylab("rate")
+
+ggsave("fpr_plot.pdf",p,width=5,height=3)
